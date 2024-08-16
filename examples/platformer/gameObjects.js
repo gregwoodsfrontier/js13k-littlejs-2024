@@ -57,6 +57,7 @@ class GameObject extends EngineObject
     }
 
     isDead()                { return !this.health; }
+    
     kill(damagingObject)    { this.destroy(); }
 }
 

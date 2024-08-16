@@ -32,6 +32,11 @@ class Character extends GameObject
         this.walkCyclePercent = 0;
         this.health = 1;
         this.setCollision(true,false);
+        // newly added vars
+        this.countA = 0;
+        this.countALimit = 13;
+        this.walkedDistance = 0
+        this.currX = this.pos.x
     }
     
     update() 
@@ -135,7 +140,7 @@ class Character extends GameObject
                 this.groundTimer.set(.1);
             }
 
-            if (this.groundTimer.active() && !this.dodgeTimer.active())
+            if (this.isOnGround())
             {
                 // is on ground
                 if (this.pressedJumpTimer.active() && !this.jumpTimer.active())
@@ -211,6 +216,8 @@ class Character extends GameObject
         if (moveInput.x && !this.dodgeTimer.active())
             this.mirror = moveInput.x < 0;
     }
+
+    isOnGround() {return this.groundTimer.active() && !this.dodgeTimer.active()}
        
     render()
     {
@@ -230,6 +237,8 @@ class Character extends GameObject
             bodyPos = bodyPos.add(vec2(0,(this.drawSize.y-this.size.y)/2));
         }
         drawTile(bodyPos, this.drawSize, this.tileInfo, this.color, this.angle, this.mirror);
+
+        // debugText('Counts: ' + this.countA, overlayCanvas.width*1/4, 50)
     }
 
     damage(damage, damagingObject)
@@ -259,11 +268,49 @@ class Character extends GameObject
         this.angleDamping = .9;
         this.renderOrder = -1;  // move to back layer
     }
+
+    countTileWhenGorund(data, pos) {
+        let oneTileDistance = 1
+        
+        if(this.isOnGround())
+        {
+            // check for update in lastTilepos, especially in x 
+            if(this.moveInput.x !== 0) 
+            {
+                if(this.currX === this.pos.x) return
+
+                this.walkedDistance += Math.abs(this.velocity.x)
+                console.log(this.walkedDistance.toFixed(4))
+                
+                if(Math.abs(this.walkedDistance) > oneTileDistance)
+                {
+                    this.walkedDistance = 0
+                    console.log("before count: ", this.countA)
+                    // update the count
+                    this.countA++
+    
+                    console.log("after count: ", this.countA)
+                    // check if the count reaches limit
+                    if(this.countA >= this.countALimit)
+                    {
+                        console.log("crate should be drop ")
+                        new Crate(vec2(pos.x, pos.y + 5))
+                        // resets the count
+                        this.countA = 0
+                    }
+                }
+            }
+        }
+
+        this.currX = this.pos.x
+    }
     
     collideWithTile(data, pos)
     {
         if (!data)
             return;
+        
+        this.countTileWhenGorund(data, pos)
 
         if (data == tileType_ladder)
         {
