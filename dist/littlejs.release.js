@@ -156,16 +156,57 @@ function smoothStep(percent) { return percent * percent * (3 - 2 * percent); }
 function nearestPowerOfTwo(value) { return 2**Math.ceil(Math.log2(value)); }
 
 /** Returns true if two axis aligned bounding boxes are overlapping 
- *  @param {Vector2} pointA         - Center of box A
- *  @param {Vector2} sizeA          - Size of box A
- *  @param {Vector2} pointB         - Center of box B
- *  @param {Vector2} [sizeB=(0,0)]  - Size of box B, a point if undefined
- *  @return {Boolean}               - True if overlapping
+ *  @param {Vector2} posA          - Center of box A
+ *  @param {Vector2} sizeA         - Size of box A
+ *  @param {Vector2} posB          - Center of box B
+ *  @param {Vector2} [sizeB=(0,0)] - Size of box B, a point if undefined
+ *  @return {Boolean}              - True if overlapping
  *  @memberof Utilities */
-function isOverlapping(pointA, sizeA, pointB, sizeB=vec2())
+function isOverlapping(posA, sizeA, posB, sizeB=vec2())
 { 
-    return abs(pointA.x - pointB.x)*2 < sizeA.x + sizeB.x 
-        && abs(pointA.y - pointB.y)*2 < sizeA.y + sizeB.y;
+    return abs(posA.x - posB.x)*2 < sizeA.x + sizeB.x 
+        && abs(posA.y - posB.y)*2 < sizeA.y + sizeB.y;
+}
+
+/** Returns true if a line segment is intersecting an axis aligned box
+ *  @param {Vector2} start - Start of raycast
+ *  @param {Vector2} end   - End of raycast
+ *  @param {Vector2} pos   - Center of box
+ *  @param {Vector2} size  - Size of box
+ *  @return {Boolean}      - True if intersecting
+ *  @memberof Utilities */
+function isIntersecting(start, end, pos, size)
+{
+    // Liang-Barsky algorithm
+    const boxMin = pos.subtract(size.scale(.5));
+    const boxMax = boxMin.add(size);
+    const delta = end.subtract(start);
+    const a = start.subtract(boxMin);
+    const b = start.subtract(boxMax);
+    const p = [-delta.x, delta.x, -delta.y, delta.y];
+    const q = [a.x, -b.x, a.y, -b.y];
+    let tMin = 0, tMax = 1;
+    for (let i = 4; i--;)
+    {
+        if (p[i])
+        {
+            const t = q[i] / p[i];
+            if (p[i] < 0)
+            {
+                if (t > tMax) return false;
+                tMin = max(t, tMin);
+            }
+            else
+            {
+                if (t < tMin) return false;
+                tMax = min(t, tMax);
+            }
+        }
+        else if (q[i] < 0)
+            return false;
+    }
+
+    return true;
 }
 
 /** Returns an oscillating wave between 0 and amplitude with frequency of 1 Hz by default
@@ -1349,6 +1390,8 @@ class EngineObject
         this.collideSolidObjects = false;
         /** @property {Boolean} - Object collides with and blocks other objects */
         this.isSolid = false;
+        /** @property {Boolean} - Object collides with raycasts */
+        this.collideRaycast = false;
 
         // add to list of objects
         engineObjects.push(this);
@@ -1606,16 +1649,18 @@ class EngineObject
     }
 
     /** Set how this object collides
-     *  @param {Boolean} [collideSolidObjects] - Does it collide with solid objects
-     *  @param {Boolean} [isSolid]             - Does it collide with and block other objects (expensive in large numbers)
-     *  @param {Boolean} [collideTiles]        - Does it collide with the tile collision */
-    setCollision(collideSolidObjects=true, isSolid=true, collideTiles=true)
+     *  @param {Boolean} [collideSolidObjects] - Does it collide with solid objects?
+     *  @param {Boolean} [isSolid]             - Does it collide with and block other objects? (expensive in large numbers)
+     *  @param {Boolean} [collideTiles]        - Does it collide with the tile collision?
+     *  @param {Boolean} [collideRaycast]      - Does it collide with raycasts? */
+    setCollision(collideSolidObjects=true, isSolid=true, collideTiles=true, collideRaycast=true)
     {
         ASSERT(collideSolidObjects || !isSolid, 'solid objects must be set to collide');
 
         this.collideSolidObjects = collideSolidObjects;
         this.isSolid = isSolid;
         this.collideTiles = collideTiles;
+        this.collideRaycast = collideRaycast;
     }
 
     /** Returns string containg info about this object for debugging
@@ -3293,7 +3338,7 @@ function tileCollisionRaycast(posStart, posEnd, object)
     {
         // check for tile collision
         const tileData = getTileCollisionData(pos);
-        if (tileData && (!object || object.collideWithTile(tileData, pos)))
+        if (tileData && (!object || object.collideWithTileRaycast(tileData, pos)))
         {
             debugRaycast && debugLine(posStart, posEnd, '#f00', .02);
             debugRaycast && debugPoint(pos.add(vec2(.5)), '#ff0');
@@ -3464,8 +3509,11 @@ class TileLayer extends EngineObject
             mainCanvas.height = mainCanvasSize.y;
         }
 
-        // begin a new render for the tile canvas
-        enginePreRender();
+        // disable smoothing for pixel art
+        this.context.imageSmoothingEnabled = !canvasPixelated;
+
+        // setup gl rendering if enabled
+        glEnable && glPreRender();
     }
 
     /** Call to end the redraw process */
@@ -4681,6 +4729,19 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
 {
     ASSERT(Array.isArray(imageSources), 'pass in images as array');
 
+    // Called automatically by engine to setup render system
+    function enginePreRender()
+    {
+        // save canvas size
+        mainCanvasSize = vec2(mainCanvas.width, mainCanvas.height);
+
+        // disable smoothing for pixel art
+        mainContext.imageSmoothingEnabled = !canvasPixelated;
+
+        // setup gl rendering if enabled
+        glEnable && glPreRender();
+    }
+
     // internal update loop for engine
     function engineUpdate(frameTimeMS=0)
     {
@@ -4838,7 +4899,7 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
             }
             image.src = src;
         })
-    )
+    );
 
     // draw splash screen
     showSplashScreen && promises.push(new Promise(resolve => 
@@ -4861,19 +4922,6 @@ function engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRender
         gameInit();
         engineUpdate();
     });
-}
-
-// Called automatically by engine to setup render system
-function enginePreRender()
-{
-    // save canvas size
-    mainCanvasSize = vec2(mainCanvas.width, mainCanvas.height);
-
-    // disable smoothing for pixel art
-    mainContext.imageSmoothingEnabled = !canvasPixelated;
-
-    // setup gl rendering if enabled
-    glEnable && glPreRender();
 }
 
 /** Update each engine object, remove destroyed objects, and update time
@@ -4910,7 +4958,7 @@ function engineObjectsDestroy()
 }
 
 /** Triggers a callback for each object within a given area
- *  @param {Vector2} [pos]                 - Center of test area
+ *  @param {Vector2} [pos]                 - Center of test area, or undefined for all objects
  *  @param {Number|Vector2} [size]         - Radius of circle if float, rectangle size if Vector2
  *  @param {Function} [callbackFunction]   - Calls this function on every object that passes the test
  *  @param {Array} [objects=engineObjects] - List of objects to check
@@ -4922,7 +4970,7 @@ function engineObjectsCallback(pos, size, callbackFunction, objects=engineObject
         for (const o of objects)
             callbackFunction(o);
     }
-    else if (typeof size === 'object')  // bounding box test
+    else if (size instanceof Vector2)  // bounding box test
     {
         for (const o of objects)
             isOverlapping(pos, size, o.pos, o.size) && callbackFunction(o);
@@ -4933,6 +4981,28 @@ function engineObjectsCallback(pos, size, callbackFunction, objects=engineObject
         for (const o of objects)
             pos.distanceSquared(o.pos) < sizeSquared && callbackFunction(o);
     }
+}
+
+/** Return a list of objects intersecting a ray
+ *  @param {Vector2} start
+ *  @param {Vector2} end
+ *  @param {Array} [objects=engineObjects] - List of objects to check
+ *  @return {Array} - List of objects hit
+ *  @memberof Engine */
+function engineObjectsRaycast(start, end, objects=engineObjects)
+{
+    const hitObjects = [];
+    for (const o of objects)
+    {
+        if (o.collideRaycast && isIntersecting(start, end, o.pos, o.size))
+        {
+            debugRaycast && debugRect(o.pos, o.size, '#f00');
+            hitObjects.push(o);
+        }
+    }
+
+    debugRaycast && debugLine(start, end, hitObjects.length ? '#f00' : '#00f', .02);
+    return hitObjects;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5020,16 +5090,16 @@ function drawEngineSplashScreen(t)
     rect(37,14,9,6);
 
     // big stack
-    rect(50,20,10,-10,color(0,1));
-    rect(50,20,6.5,-10,color(0,2));
-    rect(50,20,3.5,-10,color(0,3));
-    rect(50,20,10,-10);
-    circle(55,2,11.4,.5,PI-.5,color(3,3));
-    circle(55,2,11.4,.5,PI/2,color(3,2),1);
-    circle(55,2,11.4,.5,PI-.5);
-    rect(45,7,20,-7,color(0,2));
-    rect(45,0,20,3,color(0,3));
-    rect(45,0,20,7);
+    rect(50,20,10,-8,color(0,1))
+    rect(50,20,6.5,-8,color(0,2))
+    rect(50,20,3.5,-8,color(0,3))
+    rect(50,20,10,-8)
+    circle(55,2,11.4,.5,PI-.5,color(3,3))
+    circle(55,2,11.4,.5,PI/2,color(3,2),1)
+    circle(55,2,11.4,.5,PI-.5)
+    rect(45,7,20,-7,color(0,2))
+    rect(45,-1,20,4,color(0,3))
+    rect(45,-1,20,8)
 
     // engine
     for (let i=5; i--;)
