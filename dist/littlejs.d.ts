@@ -1,4 +1,4 @@
-declare module "littlejs.esm" {
+declare module "littlejsengine" {
     /**
      * LittleJS - The Tiny Fast JavaScript Game Engine
      * MIT License - Copyright 2021 Frank Force
@@ -1652,11 +1652,6 @@ declare module "littlejs.esm" {
          *  @param {Vector2} pos      - tile where the collision occured
          *  @return {Boolean}         - true if the collision should be resolved */
         collideWithTile(tileData: number, pos: Vector2): boolean;
-        /** Called to check if a tile raycast hit
-         *  @param {Number}  tileData - the value of the tile at the position
-         *  @param {Vector2} pos      - tile where the raycast is
-         *  @return {Boolean}         - true if the raycast should hit */
-        collideWithTileRaycast(tileData: number, pos: Vector2): boolean;
         /** Called to check if a object collision should be resolved
          *  @param {EngineObject} object - the object to test against
          *  @return {Boolean}            - true if the collision should be resolved
@@ -1732,7 +1727,7 @@ declare module "littlejs.esm" {
      *  @return {Boolean}
      *  @memberof TileCollision */
     export function tileCollisionTest(pos: Vector2, size?: Vector2, object?: EngineObject): boolean;
-    /** Return the center of tile if any that is hit (does not return the exact intersection)
+    /** Return the center of first tile hit (does not return the exact intersection)
      *  @param {Vector2}      posStart
      *  @param {Vector2}      posEnd
      *  @param {EngineObject} [object]

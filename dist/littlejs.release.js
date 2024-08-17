@@ -1596,13 +1596,7 @@ class EngineObject
      *  @param {Number}  tileData - the value of the tile at the position
      *  @param {Vector2} pos      - tile where the collision occured
      *  @return {Boolean}         - true if the collision should be resolved */
-    collideWithTile(tileData, pos)        { return tileData > 0; }
-    
-    /** Called to check if a tile raycast hit
-     *  @param {Number}  tileData - the value of the tile at the position
-     *  @param {Vector2} pos      - tile where the raycast is
-     *  @return {Boolean}         - true if the raycast should hit */
-    collideWithTileRaycast(tileData, pos) { return tileData > 0; }
+    collideWithTile(tileData, pos)    { return tileData > 0; }
 
     /** Called to check if a object collision should be resolved
      *  @param {EngineObject} object - the object to test against
@@ -3313,7 +3307,7 @@ function tileCollisionTest(pos, size=vec2(), object)
     }
 }
 
-/** Return the center of tile if any that is hit (does not return the exact intersection)
+/** Return the center of first tile hit (does not return the exact intersection)
  *  @param {Vector2}      posStart
  *  @param {Vector2}      posEnd
  *  @param {EngineObject} [object]
@@ -3338,7 +3332,7 @@ function tileCollisionRaycast(posStart, posEnd, object)
     {
         // check for tile collision
         const tileData = getTileCollisionData(pos);
-        if (tileData && (!object || object.collideWithTileRaycast(tileData, pos)))
+        if (tileData && (!object || object.collideWithTile(tileData, pos)))
         {
             debugRaycast && debugLine(posStart, posEnd, '#f00', .02);
             debugRaycast && debugPoint(pos.add(vec2(.5)), '#ff0');
@@ -4662,7 +4656,7 @@ const engineName = 'LittleJS';
  *  @type {String}
  *  @default
  *  @memberof Engine */
-const engineVersion = '1.9.4';
+const engineVersion = '1.9.5';
 
 /** Frames per second to update
  *  @type {Number}
@@ -4957,6 +4951,34 @@ function engineObjectsDestroy()
     engineObjects = engineObjects.filter(o=>!o.destroyed);
 }
 
+/** Collects all object within a given area
+ *  @param {Vector2} [pos]                 - Center of test area, or undefined for all objects
+ *  @param {Number|Vector2} [size]         - Radius of circle if float, rectangle size if Vector2
+ *  @param {Array} [objects=engineObjects] - List of objects to check
+ *  @return {Array}                        - List of collected objects
+ *  @memberof Engine */
+function engineObjectsCollect(pos, size, objects=engineObjects)
+{
+    const collectedObjects = [];
+    if (!pos) // all objects
+    {
+        for (const o of objects)
+            collectedObjects.push(o);
+    }
+    else if (size instanceof Vector2)  // bounding box test
+    {
+        for (const o of objects)
+            isOverlapping(pos, size, o.pos, o.size) && collectedObjects.push(o);
+    }
+    else  // circle test
+    {
+        const sizeSquared = size*size;
+        for (const o of objects)
+            pos.distanceSquared(o.pos) < sizeSquared && collectedObjects.push(o);
+    }
+    return collectedObjects;
+}
+
 /** Triggers a callback for each object within a given area
  *  @param {Vector2} [pos]                 - Center of test area, or undefined for all objects
  *  @param {Number|Vector2} [size]         - Radius of circle if float, rectangle size if Vector2
@@ -4964,24 +4986,7 @@ function engineObjectsDestroy()
  *  @param {Array} [objects=engineObjects] - List of objects to check
  *  @memberof Engine */
 function engineObjectsCallback(pos, size, callbackFunction, objects=engineObjects)
-{
-    if (!pos) // all objects
-    {
-        for (const o of objects)
-            callbackFunction(o);
-    }
-    else if (size instanceof Vector2)  // bounding box test
-    {
-        for (const o of objects)
-            isOverlapping(pos, size, o.pos, o.size) && callbackFunction(o);
-    }
-    else  // circle test
-    {
-        const sizeSquared = size*size;
-        for (const o of objects)
-            pos.distanceSquared(o.pos) < sizeSquared && callbackFunction(o);
-    }
-}
+{ engineObjectsCollect(pos, size, objects).forEach(o => callbackFunction(o)); }
 
 /** Return a list of objects intersecting a ray
  *  @param {Vector2} start
