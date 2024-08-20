@@ -285,15 +285,16 @@ class Character extends GameObject
                 if(Math.abs(this.walkedDistance) > oneTileDistance)
                 {
                     this.walkedDistance = 0
-                    
+                    console.log("before count: ", this.countA)
                     // update the count
                     this.countA++
     
+                    console.log("after count: ", this.countA)
                     // check if the count reaches limit
                     if(this.countA >= this.countALimit)
                     {
-                        // 
-                        this.mechainc()
+                        console.log("crate should be drop ")
+                        new Crate(vec2(pos.x, pos.y + 5))
                         // resets the count
                         this.countA = 0
                     }
@@ -302,10 +303,6 @@ class Character extends GameObject
         }
 
         this.currX = this.pos.x
-    }
-
-    mechainc() {
-        new Crate(vec2(pos.x, pos.y + 5))
     }
     
     collideWithTile(data, pos)
