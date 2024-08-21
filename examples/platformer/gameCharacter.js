@@ -37,6 +37,11 @@ class Character extends GameObject
         this.countALimit = 13;
         this.walkedDistance = 0
         this.currX = this.pos.x
+
+        this.comp1 = new TilesCountDownComponent(13, 1)
+        this.comp1.executeMechanic = () => {
+            this.mechainc()
+        }
     }
     
     update() 
@@ -215,6 +220,10 @@ class Character extends GameObject
         // update mirror
         if (moveInput.x && !this.dodgeTimer.active())
             this.mirror = moveInput.x < 0;
+
+        if(this.isOnGround() && this.moveInput.x !== 0) {
+            this.comp1.update(this.pos.x, this.velocity.x)
+        }
     }
 
     isOnGround() {return this.groundTimer.active() && !this.dodgeTimer.active()}
@@ -269,43 +278,8 @@ class Character extends GameObject
         this.renderOrder = -1;  // move to back layer
     }
 
-    countTileWhenGorund(data, pos) {
-        let oneTileDistance = 1
-        
-        if(this.isOnGround())
-        {
-            // check for update in lastTilepos, especially in x 
-            if(this.moveInput.x !== 0) 
-            {
-                if(this.currX === this.pos.x) return
-
-                this.walkedDistance += Math.abs(this.velocity.x)
-                console.log(this.walkedDistance.toFixed(4))
-                
-                if(Math.abs(this.walkedDistance) > oneTileDistance)
-                {
-                    this.walkedDistance = 0
-                    
-                    // update the count
-                    this.countA++
-    
-                    // check if the count reaches limit
-                    if(this.countA >= this.countALimit)
-                    {
-                        // 
-                        this.mechainc()
-                        // resets the count
-                        this.countA = 0
-                    }
-                }
-            }
-        }
-
-        this.currX = this.pos.x
-    }
-
     mechainc() {
-        new Crate(vec2(pos.x, pos.y + 5))
+        new Grenade(vec2(this.pos.x, this.pos.y + 5))
     }
     
     collideWithTile(data, pos)
@@ -313,7 +287,7 @@ class Character extends GameObject
         if (!data)
             return;
         
-        this.countTileWhenGorund(data, pos)
+        // this.countTileWhenGorund(data, pos)
 
         if (data == tileType_ladder)
         {
