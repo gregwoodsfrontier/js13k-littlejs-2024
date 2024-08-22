@@ -305,7 +305,22 @@ class Character extends GameObject
     }
 
     mechainc() {
-        new Crate(vec2(pos.x, pos.y + 5))
+        const offset = {
+            x: 3,
+            y: 5
+        }
+        let spawnPos = sign(this.velocity.x) > 0 ? this.pos.add(vec2(offset.x, offset.y)) : this.pos.add(vec2(-offset.x, offset.y))
+        // check if there is tile on the offest position
+        if(!getTileCollisionData(spawnPos))
+        {
+            // spawn the ball
+            new Grenade(spawnPos)
+        }
+        else 
+        {
+            new Crate(spawnPos.add(vec(0, 5)))
+        }
+        
     }
     
     collideWithTile(data, pos)
