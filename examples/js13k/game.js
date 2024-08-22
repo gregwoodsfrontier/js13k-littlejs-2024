@@ -13,6 +13,14 @@ const sound_click = new Sound([1,.5]);
 // game variables
 let particleEmitter;
 
+const asciiTilemapB = [
+    '1               ',
+    '111             ',
+    '111             ',
+    '11              ',
+    '1111111111   11111   111111'
+]
+
 // webgl can be disabled to save even more space
 //glEnable = false;
 
@@ -20,56 +28,23 @@ let particleEmitter;
 function gameInit()
 {
     // create tile collision and visible tile layer
-    initTileCollision(vec2(16,8));
+    initTileCollision(vec2(32,16));
+    // const tileImage = textureInfos[0].image;
+    // mainContext.drawImage(tileImage, 0, 0);
+    // const imageData = mainContext.getImageData(0,0,tileImage.width,tileImage.height).data;
+
     const pos = vec2();
     const tileLayer = new TileLayer(pos, tileCollisionSize);
-
-    // get level data from the tiles image
-    // const tileImage = textureInfos[0].image;
-    // mainContext.drawImage(tileImage,0,0);
-    // const imageData = mainContext.getImageData(0,0,tileImage.width,tileImage.height).data;
-    // for (pos.x = tileCollisionSize.x; pos.x--;)
-    // for (pos.y = tileCollisionSize.y; pos.y--;)
-    // {
-    //     // check if this pixel is set
-    //     const i = pos.x + tileImage.width*(15 + tileCollisionSize.y - pos.y);
-    //     if (!imageData[4*i])
-    //         continue;
-        
-    //     // set tile data
-    //     const tileIndex = 1;
-    //     const direction = randInt(4)
-    //     const mirror = randInt(2);
-    //     const color = randColor();
-    //     const data = new TileLayerData(tileIndex, direction, mirror, color);
-    //     tileLayer.setData(pos, data);
-    //     setTileCollisionData(pos, 1);
-    // }
-    const asciiTilemap = [
-        '11111',
-        '11110',
-        '11100',
-        '11000',
-        '10000'
-    ]
-
-    const asciiTilemapB = [
-        '00000',
-        '11110',
-        '11100',
-        '11000',
-        '11111'
-    ]
+    const tileIndex = 3;
 
     for(let row = asciiTilemapB.length ; row--;) {
         for(let col = asciiTilemapB[row].length; col--;) {
-            if(asciiTilemapB[row][col] !== "1") continue
+            if(asciiTilemapB[row][col] === " ") continue
             
-            const tileIndex = 0;
-            const direction = randInt(4)
-            const mirror = randInt(2);
-            const color = randColor();
-            const data = new TileLayerData(tileIndex, direction, mirror, color);
+            const direction = 0
+            const mirror = 0;
+            const color = 0;
+            const data = new TileLayerData(tileIndex, direction, mirror, undefined);
             
             pos.y = asciiTilemapB.length - row
             pos.x = 6 + col
@@ -103,7 +78,7 @@ function gameInit()
     particleEmitter = new ParticleEmitter(
         vec2(16,9), 0,              // emitPos, emitAngle
         1, 0, 500, PI,              // emitSize, emitTime, emitRate, emiteCone
-        tile(0, 16),                // tileIndex, tileSize
+        tile(2),                // tileIndex, tileSize
         new Color(1,1,1),   new Color(0,0,0),   // colorStartA, colorStartB
         new Color(0,0,0,0), new Color(0,0,0,0), // colorEndA, colorEndB
         2, .2, .2, .1, .05,   // time, sizeStart, sizeEnd, speed, angleSpeed
@@ -145,6 +120,7 @@ function gameRender()
 {
     // draw a grey square in the background without using webgl
     drawRect(vec2(16,8), vec2(20,14), new Color(.6,.6,.6), 0, 0);
+    drawRect(vec2(0,0), vec2(1,1), new Color(1, 0, 0), 0, 0 )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -156,4 +132,4 @@ function gameRenderPost()
 
 ///////////////////////////////////////////////////////////////////////////////
 // Startup LittleJS Engine
-engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost);
+engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, ['tiles.png']);
