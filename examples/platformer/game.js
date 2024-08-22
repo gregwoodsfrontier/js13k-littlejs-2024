@@ -48,41 +48,9 @@ function gameInit()
     objectDefaultAngleDamping = .99;
     cameraScale = 4*16;
     cameraPos = getCameraTarget();
-
-    // countTiles()
-    drawRect(vec2(15, 15),vec2(TILE_SIZE, TILE_SIZE), new Color(0, 1, 0))
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-function countTiles()
-{
-    if(!player) return
-
-    const playerTileVec = new Vector2(
-        Math.floor(player.pos.x),
-        Math.floor(player.pos.y)
-    )
-
-    if(!lastTileX || !lastTileY) {
-        lastTileX = playerTileVec.x
-        lastTileY = playerTileVec.y
-    }
-
-    let currX = lastTileX;
-    let currY = lastTileY;
-
-    if (currX !== playerTileVec.x)
-    {
-        // const tileKey = `${currX},${currY}`
-
-        uniqueCount++
-
-        if(currX !== playerTileVec.x) currX += Math.sign(playerTileVec.x - currX)
-
-        lastTileX = playerTileVec.x
-    }
-}
-
 function gameUpdate()
 {
     // respawn player

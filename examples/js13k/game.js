@@ -20,7 +20,7 @@ let particleEmitter;
 function gameInit()
 {
     // create tile collision and visible tile layer
-    initTileCollision(vec2(32,16));
+    initTileCollision(vec2(16,8));
     const pos = vec2();
     const tileLayer = new TileLayer(pos, tileCollisionSize);
 
@@ -45,16 +45,50 @@ function gameInit()
     //     tileLayer.setData(pos, data);
     //     setTileCollisionData(pos, 1);
     // }
+    const asciiTilemap = [
+        '11111',
+        '11110',
+        '11100',
+        '11000',
+        '10000'
+    ]
 
-    for(pos.x = tileCollisionSize.x; pos.x--;) {
-        const tileIndex = 1;
-        const direction = randInt(4)
-        const mirror = randInt(2);
-        const color = randColor();
-        const data = new TileLayerData(tileIndex, direction, mirror, color);
-        tileLayer.setData(pos, data);
-        setTileCollisionData(pos, 1);
+    const asciiTilemapB = [
+        '00000',
+        '11110',
+        '11100',
+        '11000',
+        '11111'
+    ]
+
+    for(let row = asciiTilemapB.length ; row--;) {
+        for(let col = asciiTilemapB[row].length; col--;) {
+            if(asciiTilemapB[row][col] !== "1") continue
+            
+            const tileIndex = 0;
+            const direction = randInt(4)
+            const mirror = randInt(2);
+            const color = randColor();
+            const data = new TileLayerData(tileIndex, direction, mirror, color);
+            
+            pos.y = asciiTilemapB.length - row
+            pos.x = 6 + col
+
+
+            tileLayer.setData(pos, data);
+            setTileCollisionData(pos, 1);
+        }
     }
+
+    // for(pos.x = 1; pos.x < 3; pos.x++) {
+    //     const tileIndex = 1;
+    //     const direction = randInt(4)
+    //     const mirror = randInt(2);
+    //     const color = randColor();
+    //     const data = new TileLayerData(tileIndex, direction, mirror, color);
+    //     tileLayer.setData(pos, data);
+    //     setTileCollisionData(pos, 1);
+    // }
 
     // draw tile layer with new data
     tileLayer.redraw();
