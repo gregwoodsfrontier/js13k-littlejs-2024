@@ -25,18 +25,28 @@ function gameInit()
     const tileLayer = new TileLayer(pos, tileCollisionSize);
 
     // get level data from the tiles image
-    const tileImage = textureInfos[0].image;
-    mainContext.drawImage(tileImage,0,0);
-    const imageData = mainContext.getImageData(0,0,tileImage.width,tileImage.height).data;
-    for (pos.x = tileCollisionSize.x; pos.x--;)
-    for (pos.y = tileCollisionSize.y; pos.y--;)
-    {
-        // check if this pixel is set
-        const i = pos.x + tileImage.width*(15 + tileCollisionSize.y - pos.y);
-        if (!imageData[4*i])
-            continue;
+    // const tileImage = textureInfos[0].image;
+    // mainContext.drawImage(tileImage,0,0);
+    // const imageData = mainContext.getImageData(0,0,tileImage.width,tileImage.height).data;
+    // for (pos.x = tileCollisionSize.x; pos.x--;)
+    // for (pos.y = tileCollisionSize.y; pos.y--;)
+    // {
+    //     // check if this pixel is set
+    //     const i = pos.x + tileImage.width*(15 + tileCollisionSize.y - pos.y);
+    //     if (!imageData[4*i])
+    //         continue;
         
-        // set tile data
+    //     // set tile data
+    //     const tileIndex = 1;
+    //     const direction = randInt(4)
+    //     const mirror = randInt(2);
+    //     const color = randColor();
+    //     const data = new TileLayerData(tileIndex, direction, mirror, color);
+    //     tileLayer.setData(pos, data);
+    //     setTileCollisionData(pos, 1);
+    // }
+
+    for(pos.x = tileCollisionSize.x; pos.x--;) {
         const tileIndex = 1;
         const direction = randInt(4)
         const mirror = randInt(2);
