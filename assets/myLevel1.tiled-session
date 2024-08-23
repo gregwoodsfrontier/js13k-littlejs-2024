@@ -1,4 +1,8 @@
 {
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
     "activeFile": "",
     "expandedProjectPaths": [
     ],
@@ -9,16 +13,26 @@
             "scaleInEditor": 8
         }
     },
+    "last.exportedFilePath": "D:/js13k-littlejs-2024/assets",
     "last.imagePath": "D:/js13k-littlejs-2024/assets",
+    "map.lastUsedExportFilter": "JavaScript map files (*.js)",
+    "map.lastUsedFormat": "tmx",
+    "map.layerDataFormat": "1",
+    "map.renderOrder": "3",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
     "openFiles": [
     ],
     "project": "myLevel1.tiled-project",
     "recentFiles": [
         "spooky6.tsx"
     ],
+    "tileset.embedInMap": true,
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
         "height": 16,
         "width": 16
-    }
+    },
+    "tileset.transparentColor": "#f5ddff",
+    "tileset.useTransparentColor": true
 }
